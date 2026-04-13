@@ -7,9 +7,9 @@ from infra.actorsDirectors import *
 from infra.genresProducers import *
 from api.auth import TOKEN_EXPIRATION, create_jwt, auth_token, verify_jwt
 
-# Simula banco de dados, armazenando senha criptografada
+
 USERS = {
-    "marcelo@mail.com": hashlib.sha256("123456".encode()).hexdigest(),
+    "usuario@mail.com": hashlib.sha256("123456".encode()).hexdigest(),
     "admin@example.com": hashlib.sha256("admin".encode()).hexdigest()
 }
 
@@ -75,24 +75,18 @@ class MyHandler(SimpleHTTPRequestHandler):
             self._send_json(paises)
 
         elif self.path.startswith('/filme'):
-            # header_auth = self.headers.get("Authorization", "")
             query_params = parse_qs(urlparse(self.path).query)
-            # print(query_params)
-            
+
             try:
                 id = int(query_params.get('id', [''])[0])
             except:
                 self._send_json({"error": "ID inválido"}, 400)
                 return
 
-            # id = int(query_params.get('id', [''])[0])
             filme = loadFilmini(id)
             print(filme)
 
-            # if auth_token(header_auth):
             self._send_json(filme)
-            # else:
-            #     self._send_json({"error": "Token inválido ou expirado"}, 401)
 
     def do_POST(self):
         
@@ -111,7 +105,7 @@ class MyHandler(SimpleHTTPRequestHandler):
             print("Password", password)
             
             if USERS.get(email) == hashed:
-                is_admin = email in ADMINS  #ADMINS seria uma lista ou set com emails de administradores
+                is_admin = email in ADMINS 
                 payload = {
                     "sub": email,
                     "role": "admin" if is_admin else "user",
@@ -237,25 +231,21 @@ class MyHandler(SimpleHTTPRequestHandler):
         header_auth = self.headers.get("Authorization", "")
         query_params = parse_qs(urlparse(self.path).query)
 
-        # --- valida ID ---
         try:
             id_item = int(query_params.get('id', [''])[0])
         except:
             self._send_json({"error": "ID inválido"}, 400)
             return
 
-        # --- valida token ---
         payload = verify_jwt(header_auth)
         if not payload:
             self._send_json({"error": "Token inválido ou expirado"}, 401)
             return
 
-        # --- valida admin ---
         if payload.get("role") != "admin":
             self._send_json({"error": "Apenas administradores podem deletar"}, 403)
             return
 
-        # --- DELETE FILME ---
         if self.path.startswith('/filme'):
             resultado = deleteFilminho(id_item)
 
@@ -265,13 +255,11 @@ class MyHandler(SimpleHTTPRequestHandler):
                 self._send_json(resultado)
             return
 
-        # --- DELETE ATOR ---
         if self.path.startswith('/atores'):
             resultado = deleteActorsDirector("ator", id_item)
             self._send_json(resultado)
             return
 
-        # --- DELETE DIRETOR ---
         if self.path.startswith('/diretores'):
             resultado = deleteActorsDirector("diretor", id_item)
             self._send_json(resultado)
@@ -298,5 +286,4 @@ class MyHandler(SimpleHTTPRequestHandler):
             return
 
 
-        # --- rota inválida ---
         self._send_json({"error": "Rota de deleção inválida"}, 404)

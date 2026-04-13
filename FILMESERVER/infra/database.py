@@ -44,22 +44,6 @@ def loadFilminhos():
     ]
     return filmes
 
-# def insertFilminhos(nome, produtora, orcamento, duracao, ano, poster):
-#     db = get_connection()
-#     cursor = db.cursor()
-#     cursor.execute(
-#         "INSERT INTO filme_mari.filme (titulo, id_produtora_principal, orcamento, duracao, ano, poster) VALUES (%s, %s, %s, %s, %s, %s)",
-#         (nome, produtora, orcamento, duracao, ano, poster)
-#     )
-#     cursor.execute("SELECT id_filme FROM filme_mari.filme WHERE titulo = %s", (nome,))
-#     id_filme = cursor.fetchone()[0]
-#     cursor.execute("SELECT * FROM filme_mari.filme WHERE id_filme = %s", (id_filme,))
-#     resultado = cursor.fetchall()
-#     db.commit()
-#     cursor.close()
-#     db.close()
-#     return resultado
-
 def insertFilminhos(
     nome,
     produtora_principal,
@@ -68,7 +52,7 @@ def insertFilminhos(
     atores,
     diretores,
     linguagens,
-    paises,          # ⬅️ NOVO
+    paises,
     orcamento,
     duracao,
     ano,
@@ -77,7 +61,6 @@ def insertFilminhos(
     db = get_connection()
     cursor = db.cursor()
 
-    # 1️⃣ Filme
     cursor.execute(
         """
         INSERT INTO filme
@@ -87,44 +70,44 @@ def insertFilminhos(
         (nome, produtora_principal, orcamento, duracao, ano, poster)
     )
 
+
     id_filme = cursor.lastrowid
 
-    # 2️⃣ Produtoras N:N
     for id_produtora in produtoras:
         cursor.execute(
             "INSERT INTO filme_produtora (id_filme, id_produtora) VALUES (%s, %s)",
             (id_filme, id_produtora)
         )
 
-    # 3️⃣ Categorias
+
     for id_categoria in categorias:
         cursor.execute(
             "INSERT INTO filme_categoria (id_filme, id_categoria) VALUES (%s, %s)",
             (id_filme, id_categoria)
         )
 
-    # 4️⃣ Atores
+
     for id_ator in atores:
         cursor.execute(
             "INSERT INTO filme_ator (id_filme, id_ator) VALUES (%s, %s)",
             (id_filme, id_ator)
         )
 
-    # 5️⃣ Diretores
+
     for id_diretor in diretores:
         cursor.execute(
             "INSERT INTO filme_diretor (id_filme, id_diretor) VALUES (%s, %s)",
             (id_filme, id_diretor)
         )
 
-    # 6️⃣ Linguagens
+
     for id_linguagem in linguagens:
         cursor.execute(
             "INSERT INTO filme_linguagem (id_filme, id_linguagem) VALUES (%s, %s)",
             (id_filme, id_linguagem)
         )
 
-    # 7️⃣ Países do filme
+
     for id_pais in paises:
         cursor.execute(
             "INSERT INTO filme_pais (id_filme, id_pais) VALUES (%s, %s)",
@@ -139,7 +122,6 @@ def insertFilminhos(
         "message": "Filme inserido com sucesso",
         "id_filme": id_filme
     }
-
 
 def loadFilmini(id):
     print(id)
@@ -173,7 +155,7 @@ def deleteFilminho(id_filme):
     db = get_connection()
     cursor = db.cursor()
 
-    # 1. Verifica se o filme existe
+
     cursor.execute(
         "SELECT id_filme FROM filme WHERE id_filme = %s",
         (id_filme,)
@@ -184,14 +166,14 @@ def deleteFilminho(id_filme):
         db.close()
         return None
 
-    # 2. Remove relacionamentos (N:N)
+
     cursor.execute("DELETE FROM filme_ator WHERE id_filme = %s", (id_filme,))
     cursor.execute("DELETE FROM filme_categoria WHERE id_filme = %s", (id_filme,))
     cursor.execute("DELETE FROM filme_diretor WHERE id_filme = %s", (id_filme,))
     cursor.execute("DELETE FROM filme_linguagem WHERE id_filme = %s", (id_filme,))
     cursor.execute("DELETE FROM filme_produtora WHERE id_filme = %s", (id_filme,))
 
-    # 3. Remove o filme
+
     cursor.execute(
         "DELETE FROM filme WHERE id_filme = %s",
         (id_filme,)

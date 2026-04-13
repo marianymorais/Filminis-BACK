@@ -51,20 +51,18 @@ def deleteActorsDirector(tabela, id_item):
     db = get_connection()
     cursor = db.cursor()
 
-    # verifica se existe
     cursor.execute(f"SELECT * FROM {tabela} WHERE id_{tabela} = %s", (id_item,))
     if not cursor.fetchone():
         cursor.close()
         db.close()
         return {"error": f"{tabela} não encontrado"}
 
-    # verifica vínculo com filme
     if tabela == "ator":
         cursor.execute(
             "SELECT * FROM filme_ator WHERE id_ator = %s",
             (id_item,)
         )
-    else:  # diretor
+    else:  
         cursor.execute(
             "SELECT * FROM filme_diretor WHERE id_diretor = %s",
             (id_item,)
@@ -77,7 +75,6 @@ def deleteActorsDirector(tabela, id_item):
             "error": f"Não é possível deletar {tabela}. Está vinculado a um ou mais filmes."
         }
 
-    # deleta
     cursor.execute(
         f"DELETE FROM {tabela} WHERE id_{tabela} = %s",
         (id_item,)

@@ -32,7 +32,7 @@ def insertGenresProducer(tabela, nome):
     db = get_connection()
     cursor = db.cursor()
 
-    # verifica se já existe
+
     cursor.execute(
         f"SELECT * FROM {tabela} WHERE nome = %s",
         (nome,)
@@ -42,7 +42,7 @@ def insertGenresProducer(tabela, nome):
         db.close()
         return {"error": f"{nome} já existe em {tabela}"}
 
-    # insere
+
     cursor.execute(
         f"INSERT INTO {tabela} (nome) VALUES (%s)",
         (nome,)
@@ -61,14 +61,13 @@ def deleteGenresProducer(tabela, id_item):
     db = get_connection()
     cursor = db.cursor()
 
-    # 1️⃣ verifica se existe
+
     cursor.execute(f"SELECT * FROM {tabela} WHERE id_{tabela} = %s", (id_item,))
     if not cursor.fetchone():
         cursor.close()
         db.close()
         return {"error": f"{tabela} não encontrado"}
 
-    # 2️⃣ verifica vínculos com filmes
     if tabela == "categoria":
         cursor.execute(
             "SELECT * FROM filme_categoria WHERE id_categoria = %s",
@@ -100,7 +99,7 @@ def deleteGenresProducer(tabela, id_item):
             "error": f"Não é possível deletar {tabela}. Está vinculado a um ou mais filmes."
         }
 
-    # 3️⃣ deleta
+
     cursor.execute(
         f"DELETE FROM {tabela} WHERE id_{tabela} = %s",
         (id_item,)
