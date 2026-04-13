@@ -1,1 +1,3 @@
 !**/__pycache__/
+!**/api/**/__pycache__/
+!**/infra/**/__pycache__/
