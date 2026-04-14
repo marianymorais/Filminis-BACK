@@ -45,15 +45,6 @@ CREATE TABLE diretor (
   FOREIGN KEY (id_genero) REFERENCES genero(id_genero)
 );
 
-CREATE TABLE filme_pais (
-  id_filme_pais INT AUTO_INCREMENT PRIMARY KEY,
-  id_filme INT NOT NULL,
-  id_pais INT NOT NULL,
-
-  FOREIGN KEY (id_filme) REFERENCES filme(id_filme),
-  FOREIGN KEY (id_pais) REFERENCES pais(id_pais)
-);
-
 -- Países das pessoas e produtoras
 CREATE TABLE ator_pais (
   id_ator_pais INT PRIMARY KEY AUTO_INCREMENT,
@@ -98,6 +89,15 @@ CREATE TABLE filme_produtora (
   id_produtora INT NOT NULL,
   FOREIGN KEY (id_filme) REFERENCES filme(id_filme),
   FOREIGN KEY (id_produtora) REFERENCES produtora(id_produtora)
+);
+
+CREATE TABLE filme_pais (
+  id_filme_pais INT AUTO_INCREMENT PRIMARY KEY,
+  id_filme INT NOT NULL,
+  id_pais INT NOT NULL,
+
+  FOREIGN KEY (id_filme) REFERENCES filme(id_filme),
+  FOREIGN KEY (id_pais) REFERENCES pais(id_pais)
 );
 
 CREATE TABLE filme_categoria (
