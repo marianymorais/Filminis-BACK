@@ -4,7 +4,9 @@ SELECT
   f.titulo,
   f.ano,
   f.duracao,
+  f.sinopse,
   f.orcamento,
+  f.flag,
   f.poster,
   pp.nome AS produtora_principal,
   (
