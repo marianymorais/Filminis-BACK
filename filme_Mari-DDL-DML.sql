@@ -1,7 +1,7 @@
 DROP DATABASE IF EXISTS filme_mari;
 CREATE DATABASE filme_mari;
 USE filme_mari;
-
+DROP TABLE IF EXISTS usuario;
 -- Tabelas básicas
 CREATE TABLE pais (
   id_pais INT PRIMARY KEY AUTO_INCREMENT,
@@ -132,6 +132,22 @@ CREATE TABLE filme_linguagem (
   id_linguagem INT NOT NULL,
   FOREIGN KEY (id_filme) REFERENCES filme(id_filme),
   FOREIGN KEY (id_linguagem) REFERENCES linguagem(id_linguagem)
+);
+
+
+-- CRIAÇÃO DAS TABELAS DE USUÁRIOS
+
+CREATE TABLE usuario (
+  id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL,
+  sobrenome VARCHAR(255),
+  apelido VARCHAR(100),
+  email VARCHAR(255) NOT NULL UNIQUE,
+  senha VARCHAR(255) NOT NULL,
+  data_nascimento DATE,
+  imagem VARCHAR(500), -- link da imagem
+  role ENUM('admin','user') NOT NULL DEFAULT 'user',
+  data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Inserção de dados de exemplo
@@ -377,3 +393,28 @@ INSERT INTO filme_linguagem (id_filme, id_linguagem) VALUES
 (18,1), (18,18), 
 (19,1), 
 (20,1), (20,14);
+
+-- usuários 
+INSERT INTO usuario (nome, sobrenome, apelido, email, senha, data_nascimento, imagem, role)
+VALUES (
+	'mariany',
+    'morais',
+    'mari',
+    'admin@example.com',
+    SHA2('admin', 256),
+    '1995-03-18',
+    'imagem',
+    'admin'
+);
+
+INSERT INTO usuario (nome, sobrenome, apelido, email, senha, data_nascimento, imagem, role)
+VALUES (
+	'mariany',
+    'morais',
+    'mari',
+    'usuario@mail.com',
+    SHA2('123456', 256),
+    "1995-03-18",
+    'imagem',
+    'user'
+)

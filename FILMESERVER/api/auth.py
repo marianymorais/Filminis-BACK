@@ -3,6 +3,9 @@ import json, base64, hmac, hashlib, time
 
 SECRET_KEY = b"supersecreto123" #chave secreta usada para assinar o token, pode ser QUALQUER COISA.
 TOKEN_EXPIRATION = 3600  # 1 Hora
+REFRESH_EXPIRATION = 86400  # 24 horas
+BLACKLIST = set()
+
 
 def base64url_encode(data):
     return base64.urlsafe_b64encode(data).decode().rstrip("=")
@@ -25,11 +28,12 @@ def create_jwt(payload):
     return f"{header_b64}.{payload_b64}.{sig_b64}"
 
 
-
-
 def verify_jwt(token):
     try:
-       
+        
+        if token in BLACKLIST:
+            return None
+
         header_b64, payload_b64, sig_b64 = token.split(".")
         msg = f"{header_b64}.{payload_b64}".encode()
         expected_sig = hmac.new(SECRET_KEY, msg, hashlib.sha256).digest()
@@ -44,7 +48,6 @@ def verify_jwt(token):
         return payload
     except Exception:
         return None
-    
 
 
 def auth_token(header_auth):
@@ -56,3 +59,16 @@ def auth_token(header_auth):
     payload = verify_jwt(token)
  
     return payload != None
+
+
+def create_refresh_token(payload):
+    payload_refresh = payload.copy()
+
+    payload_refresh["exp"] = time.time() + REFRESH_EXPIRATION
+    payload_refresh["type"] = "refresh"
+
+    return create_jwt(payload_refresh)
+
+
+def invalidate_token(token):
+    BLACKLIST.add(token)

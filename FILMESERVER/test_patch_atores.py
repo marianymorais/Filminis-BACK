@@ -1,5 +1,7 @@
+
 import unittest
 import requests
+from etc.colors import Colors
 
 BASE_URL = "http://localhost:8000"
 
@@ -8,19 +10,21 @@ ADMIN_LOGIN = {
     "password": "admin"
 }
 
+colors = Colors()
+
 class TestPatchAtores(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("\nLOGIN COMO ADMIN")
+        print(colors.colorize("\nLOGIN COMO ADMIN","green"))
 
         r = requests.post(
             f"{BASE_URL}/send_loginho",
             data=ADMIN_LOGIN
         )
 
-        print("Status login:", r.status_code)
-        print("Resposta login:", r.text)
+        print(colors.colorize("Status login:","blue"), r.status_code)
+        print(colors.colorize("Resposta login:","blue"), r.text)
 
         assert r.status_code == 200, "Falha no login"
 
@@ -28,23 +32,23 @@ class TestPatchAtores(unittest.TestCase):
 
         cls.id_filme = 21
 
-        print("Filme usado no teste:", cls.id_filme)
+        print(colors.colorize("Filme usado no teste:","blue"), cls.id_filme)
 
     def test_01_buscar_atores_antes(self):
-        print("\nBUSCANDO ATORES ANTES DO PATCH")
+        print(colors.colorize("\nBUSCANDO ATORES ANTES DO PATCH","green"))
 
         r = requests.get(
             f"{BASE_URL}/filme?id={self.id_filme}"
         )
 
-        print("Status GET:", r.status_code)
+        print(colors.colorize("Status GET:","blue"), r.status_code)
         filme = r.json()
 
         self.assertEqual(r.status_code, 200)
 
         atores = filme.get("atores", [])
 
-        print("Atores ANTES:", atores)
+        print(colors.colorize("Atores ANTES:","blue"), atores)
 
         # guarda para comparar depois
         self.__class__.atores_antes = atores
@@ -52,7 +56,7 @@ class TestPatchAtores(unittest.TestCase):
         self.assertTrue(len(atores) > 0, "Filme não tem atores")
 
     def test_02_patch_atores(self):
-        print("\nPATCH — ALTERANDO ATORES")
+        print(colors.colorize("\nPATCH — ALTERANDO ATORES","green"))
 
         url = f"{BASE_URL}/filme?id={self.id_filme}"
         headers = {
@@ -66,31 +70,31 @@ class TestPatchAtores(unittest.TestCase):
             "atores": novos_atores
         }
 
-        print("URL:", url)
-        print("Payload:", payload)
+        print(colors.colorize("URL:","blue"), url)
+        print(colors.colorize("Payload:","blue"), payload)
 
         r = requests.patch(url, json=payload, headers=headers)
 
-        print("Status PATCH:", r.status_code)
-        print("Resposta PATCH:", r.text)
+        print(colors.colorize("Status PATCH:","blue"), r.status_code)
+        print(colors.colorize("Resposta PATCH:","blue"), r.text)
 
         self.assertEqual(r.status_code, 200)
 
     def test_03_buscar_atores_depois(self):
-        print("\nBUSCANDO ATORES DEPOIS DO PATCH")
+        print(colors.colorize("\nBUSCANDO ATORES DEPOIS DO PATCH","green"))
 
         r = requests.get(
             f"{BASE_URL}/filme?id={self.id_filme}"
         )
 
-        print("Status GET:", r.status_code)
+        print(colors.colorize("Status GET:","blue"), r.status_code)
         filme = r.json()
 
         self.assertEqual(r.status_code, 200)
 
         atores_depois = filme.get("atores", [])
 
-        print("Atores DEPOIS:", atores_depois)
+        print(colors.colorize("Atores DEPOIS:","blue"), atores_depois)
 
         self.assertNotEqual(
             self.__class__.atores_antes,
@@ -98,7 +102,7 @@ class TestPatchAtores(unittest.TestCase):
             "Atores não foram alterados"
         )
 
-        print("PATCH DE ATORES FUNCIONOU COM SUCESSO")
+        print(colors.colorize("PATCH DE ATORES FUNCIONOU COM SUCESSO","green"))
 
 
 if __name__ == "__main__":

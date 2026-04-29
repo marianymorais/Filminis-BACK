@@ -3,9 +3,10 @@ import json, hashlib, time
 from http.server import SimpleHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 from infra.database import *
+from infra.users_database import *
 from infra.actorsDirectors import *
 from infra.genresProducers import *
-from api.auth import TOKEN_EXPIRATION, create_jwt, auth_token, verify_jwt
+from api.auth import *
 
 
 USERS = {
@@ -105,7 +106,58 @@ class MyHandler(SimpleHTTPRequestHandler):
             print(filme)
 
             self._send_json(filme)
+        
+        elif self.path == '/me':
+            header_auth = self.headers.get("Authorization", "")
 
+            if not header_auth.startswith("Bearer "):
+                self._send_json({"error": "Token não informado"}, 401)
+                return
+
+            token = header_auth.split(" ")[1]
+            payload = verify_jwt(token)
+
+            if not payload:
+                self._send_json({"error": "Token inválido ou expirado"}, 401)
+                return
+
+            email = payload.get("sub")
+
+            user = getUserByEmail(email)
+
+            if not user:
+                self._send_json({"error": "Usuário não encontrado"}, 404)
+                return
+
+            user.pop("senha", None)
+
+            if user.get("data_criacao"):
+                user["data_criacao"] = str(user["data_criacao"])
+
+            if user.get("data_nascimento"):
+                user["data_nascimento"] = str(user["data_nascimento"])
+
+            self._send_json(user)
+        
+        elif self.path == '/usuarios':
+            header_auth = self.headers.get("Authorization", "")
+
+            if not header_auth.startswith("Bearer "):
+                self._send_json({"error": "Token não informado"}, 401)
+                return
+
+            token = header_auth.split(" ")[1]
+            payload = verify_jwt(token)
+
+            if not payload or payload.get("role") != "admin":
+                self._send_json({"error": "Apenas admin pode listar usuários"}, 403)
+                return
+
+            usuarios = getUsuarios()
+
+            usuarios = serializeUsuarios(usuarios)
+
+            self._send_json(usuarios)
         
 
     def do_POST(self):
@@ -124,18 +176,68 @@ class MyHandler(SimpleHTTPRequestHandler):
             print("Email:", email)
             print("Password", password)
             
-            if USERS.get(email) == hashed:
-                is_admin = email in ADMINS 
+            user = getUserByEmail(email)
+
+            if user and user["senha"] == hashed:
                 payload = {
-                    "sub": email,
-                    "role": "admin" if is_admin else "user",
+                    "sub": user["email"],
+                    "role": user["role"],
                     "exp": time.time() + TOKEN_EXPIRATION
                 }
-                token = create_jwt(payload)
-                self._send_json({"token": token})
+
+                access_payload = payload.copy()
+                access_payload["type"] = "access"
+
+                access_token = create_jwt(access_payload)
+                refresh_token = create_refresh_token(payload)
+
+                self._send_json({
+                    "access_token": access_token,
+                    "refresh_token": refresh_token
+                })
             else:
                 self._send_json({"error": "Credenciais inválidas"}, 401)
 
+        elif self.path == '/register':
+            content_length = int(self.headers['Content-Length'])
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            try:
+                data = json.loads(body)
+            except:
+                self._send_json({"error": "JSON inválido"}, 400)
+                return
+
+            nome = data.get("nome")
+            sobrenome = data.get("sobrenome")
+            apelido = data.get("apelido")
+            email = data.get("email")
+            senha = data.get("senha")
+            data_nascimento = data.get("data_nascimento")
+            imagem = data.get("imagem")
+
+            if not nome or not email or not senha:
+                self._send_json(
+                    {"error": "Campos obrigatórios: nome, email e senha"},
+                    400
+                )
+                return
+
+            result = insertUser(
+                nome=nome,
+                sobrenome=sobrenome,
+                apelido=apelido,
+                email=email,
+                senha=senha,
+                data_nascimento=data_nascimento,
+                imagem=imagem,
+                role="user"
+            )
+
+            if result:
+                self._send_json(result, 201)
+            else:
+                self._send_json({"error": "Erro ao cadastrar usuário"}, 400)
 
         elif self.path == '/addCat' :
 
@@ -254,6 +356,65 @@ class MyHandler(SimpleHTTPRequestHandler):
                     {"message": "Filme enviado para aprovação do administrador"},
                     201
                 )
+        elif self.path == '/refresh':
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            try:
+                data = json.loads(body)
+            except:
+                self._send_json({"error": "JSON inválido"}, 400)
+                return
+
+            refresh_token = data.get("refresh_token")
+
+            if not refresh_token:
+                self._send_json({"error": "Refresh token não enviado"}, 400)
+                return
+
+            payload = verify_jwt(refresh_token)
+
+            if not payload:
+                self._send_json({"error": "Refresh token inválido"}, 401)
+                return
+
+            if payload.get("type") != "refresh":
+                self._send_json({"error": "Token inválido para refresh"}, 401)
+                return
+
+            new_payload = {
+                "sub": payload["sub"],
+                "role": payload["role"],
+                "type": "access",
+                "exp": time.time() + TOKEN_EXPIRATION
+            }
+
+            access_token = create_jwt(new_payload)
+
+            self._send_json({
+                "access_token": access_token
+            })
+
+        elif self.path == '/logout':
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            try:
+                data = json.loads(body)
+            except:
+                self._send_json({"error": "JSON inválido"}, 400)
+                return
+
+            refresh_token = data.get("refresh_token")
+
+            if not refresh_token:
+                self._send_json({"error": "Refresh token não informado"}, 400)
+                return
+
+            invalidate_token(refresh_token)
+
+            self._send_json({"message": "Logout realizado com sucesso"})
+
     
     def do_PUT(self):
         if self.path.startswith('/aprovafilme'):
@@ -379,6 +540,110 @@ class MyHandler(SimpleHTTPRequestHandler):
                 patchRelacionamento(id_filme, "filme_produtora", "id_produtora", data["produtoras"])
 
             self._send_json({"message": "Filme editado com sucesso"})
+
+        elif self.path.startswith('/user/role'):
+            header_auth = self.headers.get("Authorization", "")
+
+            if not header_auth.startswith("Bearer "):
+                self._send_json({"error": "Token não informado"}, 401)
+                return
+
+            token = header_auth.split(" ")[1]
+            payload = verify_jwt(token)
+
+            if not payload or payload.get("role") != "admin":
+                self._send_json(
+                    {"error": "Apenas administradores podem alterar roles"},
+                    403
+                )
+                return
+
+            params = parse_qs(urlparse(self.path).query)
+            id_usuario = params.get("id", [None])[0]
+
+            try:
+                id_usuario = int(id_usuario)
+            except:
+                self._send_json({"error": "ID inválido"}, 400)
+                return
+
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+
+            try:
+                data = json.loads(body)
+            except:
+                self._send_json({"error": "JSON inválido"}, 400)
+                return
+
+            nova_role = data.get("role")
+
+            if nova_role not in ["admin", "user"]:
+                self._send_json({"error": "Role inválida"}, 400)
+                return
+
+            sucesso = atualizarRoleUser(id_usuario, nova_role)
+
+            if sucesso:
+                self._send_json(
+                    {"message": f"Role do usuário alterada para {nova_role}"}
+                )
+            else:
+                self._send_json(
+                    {"error": "Usuário não encontrado"},
+                    404
+                )
+
+
+        elif self.path == '/edit/me':
+            header_auth = self.headers.get("Authorization", "")
+
+            if not header_auth.startswith("Bearer "):
+                self._send_json({"error": "Token não informado"}, 401)
+                return
+
+            token = header_auth.split(" ")[1]
+            payload = verify_jwt(token)
+
+            if not payload:
+                self._send_json({"error": "Token inválido ou expirado"}, 401)
+                return
+
+            email = payload.get("sub")
+
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            try:
+                data = json.loads(body)
+            except:
+                self._send_json({"error": "JSON inválido"}, 400)
+                return
+
+            campos = {}
+
+            if "nome" in data:
+                campos["nome"] = data["nome"]
+
+            if "sobrenome" in data:
+                campos["sobrenome"] = data["sobrenome"]
+
+            if "apelido" in data:
+                campos["apelido"] = data["apelido"]
+
+            if "data_nascimento" in data:
+                campos["data_nascimento"] = data["data_nascimento"]
+
+            if "imagem" in data:
+                campos["imagem"] = data["imagem"]
+
+            if not campos:
+                self._send_json({"error": "Nenhum campo para atualizar"}, 400)
+                return
+
+            patchUsuario(email, campos)
+
+            self._send_json({"message": "Perfil atualizado com sucesso"})
 
 
     def do_DELETE(self):

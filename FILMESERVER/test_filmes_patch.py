@@ -1,5 +1,7 @@
+
 import unittest
 import requests
+from etc.colors import Colors
 
 BASE_URL = "http://localhost:8000"
 
@@ -7,35 +9,41 @@ ADMIN_LOGIN = {
     "email": "admin@example.com",
     "password": "admin"
 }
+colors = Colors()
 
 class TestPatchFilme(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("\nINICIANDO LOGIN COMO ADMIN...")
+        
+        print(colors.colorize("\nINICIANDO LOGIN COMO ADMIN...", "green"))
 
         response = requests.post(
             f"{BASE_URL}/send_loginho",
             data=ADMIN_LOGIN
         )
 
-        print("Status do login:", response.status_code)
-        print("Resposta do login:", response.text)
+        print(colors.colorize("Status do login:", "blue"))
+        print(response.status_code)
+        print(colors.colorize("Resposta do login:", "blue"))
+        print(response.text)
 
         assert response.status_code == 200, "Falha no login do admin"
 
         cls.token_admin = response.json()["token"]
 
-        print("Login realizado com sucesso")
-        print("Token recebido:", cls.token_admin[:30], "...")
+        print(colors.colorize("Login realizado com sucesso", "green"))
+        print(colors.colorize("Token recebido:", "blue"))
+        print(cls.token_admin[:30], "...")
 
         # ID de um filme que já existe no banco e tem flag = true
-        cls.id_filme = 21  
+        cls.id_filme = 21
 
         print("Filme escolhido para o teste (ID):", cls.id_filme)
 
     def test_01_patch_edita_titulo_e_ano(self):
-        print("\nTESTE 01 — PATCH: editar título e ano")
+
+        print(colors.colorize("\nTESTE 01 — PATCH: editar título e ano", "green"))
 
         url = f"{BASE_URL}/filme?id={self.id_filme}"
 
@@ -49,19 +57,19 @@ class TestPatchFilme(unittest.TestCase):
             "ano": 2000
         }
 
-        print("URL:", url)
-        print("Payload enviado:", payload)
+        print(colors.colorize("URL:", "blue"), url)
+        print(colors.colorize("Payload enviado:", "blue"), payload)
 
         response = requests.patch(url, json=payload, headers=headers)
 
-        print("Status da resposta:", response.status_code)
-        print("Corpo da resposta:", response.text)
+        print(colors.colorize("Status da resposta:","blue"), response.status_code)
+        print(colors.colorize("Corpo da resposta:", "blue"), response.text)
 
         self.assertEqual(response.status_code, 200)
-        print("PATCH de título e ano realizado com sucesso")
+        print(colors.colorize("PATCH de título e ano realizado com sucesso","green"))
 
     def test_02_patch_edita_apenas_sinopse(self):
-        print("\nTESTE 02 — PATCH: editar apenas a sinopse")
+        print(colors.colorize("\nTESTE 02 — PATCH: editar apenas a sinopse","green"))
 
         url = f"{BASE_URL}/filme?id={self.id_filme}"
 
@@ -74,16 +82,16 @@ class TestPatchFilme(unittest.TestCase):
             "sinopse": "Sinopse alterada utilizando PATCH, sem mexer em outros campos."
         }
 
-        print("URL:", url)
-        print("Payload enviado:", payload)
+        print(colors.colorize("URL:","blue"), url)
+        print(colors.colorize("Payload enviado:","blue"), payload)
 
         response = requests.patch(url, json=payload, headers=headers)
 
-        print("Status da resposta:", response.status_code)
-        print("Corpo da resposta:", response.text)
+        print(colors.colorize("Status da resposta:","blue"), response.status_code)
+        print(colors.colorize("Corpo da resposta:","blue"), response.text)
 
         self.assertEqual(response.status_code, 200)
-        print("PATCH parcial (somente sinopse) realizado com sucesso")
+        print(colors.colorize("PATCH parcial (somente sinopse) realizado com sucesso","green"))
 
 
 if __name__ == "__main__":
