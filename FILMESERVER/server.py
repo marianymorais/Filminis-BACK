@@ -1,5 +1,5 @@
 from http.server import HTTPServer
-from api.handlers import MyHandler
+from api.endpoints import MyHandler
 
 def main():
     server_address = ('', 8000)
