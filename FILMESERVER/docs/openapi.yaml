@@ -1,0 +1,215 @@
+openapi: 3.0.0
+info:
+  title: Filminis API
+  version: 1.0.0
+  description: API para gerenciamento de filmes e usuários com autenticação JWT
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+
+  /send_loginho:
+    post:
+      summary: Login do usuário
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login realizado
+          content:
+            application/json:
+              example:
+                access_token: "jwt..."
+                refresh_token: "jwt..."
+
+  /register:
+    post:
+      summary: Cadastro de usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nome:
+                  type: string
+                sobrenome:
+                  type: string
+                apelido:
+                  type: string
+                email:
+                  type: string
+                senha:
+                  type: string
+      responses:
+        '201':
+          description: Usuário criado
+
+  /me:
+    get:
+      summary: Perfil do usuário
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do usuário
+
+    patch:
+      summary: Atualizar perfil
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            example:
+              nome: "Novo Nome"
+              apelido: "Novo Apelido"
+      responses:
+        '200':
+          description: Perfil atualizado
+
+  /usuarios:
+    get:
+      summary: Listar usuários (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuários
+
+  /usuario/role:
+    patch:
+      summary: Alterar role de usuário
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            example:
+              role: "admin"
+      responses:
+        '200':
+          description: Role alterada
+
+  /filme:
+    get:
+      summary: Buscar filme por ID
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Filme retornado
+
+    patch:
+      summary: Editar filme
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            example:
+              titulo: "Novo título"
+              atores: [1, 2]
+      responses:
+        '200':
+          description: Filme atualizado
+
+  /cadastrani:
+    post:
+      summary: Criar filme
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            example:
+              titulo: "Filme Teste"
+              ano: 2025
+              duracao: "0:00:00"
+              sinopse: "Lorem ipsum..."
+              orcamento: 100000
+              imagem: "linkpng"
+              produtora_id: [1]
+              categoria_id: [1,2,3]
+              atores_ids: [1,2,3]
+      responses:
+        '201':
+          description: Filme criado
+
+  /filmes-pendentes:
+    get:
+      summary: Listar filmes pendentes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de filmes
+
+  /aprovafilme:
+    put:
+      summary: Aprovar filme
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Filme aprovado
+
+  /refresh:
+    post:
+      summary: Refresh token
+      requestBody:
+        content:
+          application/json:
+            example:
+              refresh_token: "jwt..."
+      responses:
+        '200':
+          description: Novo access token
+
+  /logout:
+    post:
+      summary: Logout
+      requestBody:
+        content:
+          application/json:
+            example:
+              refresh_token: "jwt..."
+      responses:
+        '200':
+          description: Logout realizado
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

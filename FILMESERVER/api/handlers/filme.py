@@ -149,9 +149,18 @@ def post_Cadastrani(handler):
     poster = data.get("imagem")
 
     orcamento_raw = data.get("orcamento", "0")
-    orcamento = int(
-        orcamento_raw.replace("R$", "").replace(".", "").replace(",", "").strip()
-    )
+    
+    if isinstance(orcamento_raw, str):
+        orcamento = int(
+            orcamento_raw
+            .replace("R$", "")
+            .replace(".", "")
+            .replace(",", "")
+            .strip()
+        )
+    else:
+        orcamento = int(orcamento_raw)
+
 
     categorias = data.get("categoria_id", [])
     diretores = data.get("diretor_id", [])

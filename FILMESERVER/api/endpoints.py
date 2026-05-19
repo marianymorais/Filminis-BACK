@@ -42,7 +42,16 @@ class MyHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
 
-        if self.path == "/listagem":
+        
+        if self.path == "/docs":
+            self.path = "/docs/index.html"
+            return super().do_GET()
+
+        if self.path.startswith("/docs/"):
+            return super().do_GET()
+
+
+        elif self.path == "/listagem":
             get_Listagem(self)
 
         elif self.path == "/atores":

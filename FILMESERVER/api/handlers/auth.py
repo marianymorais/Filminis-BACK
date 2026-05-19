@@ -1,7 +1,5 @@
-import os
 import json, hashlib, time
-from http.server import SimpleHTTPRequestHandler
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs
 from infra.database import *
 from infra.users_database import *
 from infra.actorsDirectors import *
@@ -35,6 +33,8 @@ def post_Loginho(handler):
 
         access_token = create_jwt(access_payload)
         refresh_token = create_refresh_token(payload)
+
+        print(access_token, access_token)
 
         handler._send_json({
             "access_token": access_token,
