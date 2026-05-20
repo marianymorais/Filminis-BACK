@@ -25,7 +25,7 @@ def split_info(campo, sep=' | ', sub_sep=' — ', keys=('nome', 'genero')):
 def loadFilminhos():
     db = get_connection()
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM filme")
+    cursor.execute(moviequery)
     results = cursor.fetchall()
     cursor.close()
     db.close()
@@ -34,13 +34,15 @@ def loadFilminhos():
         {
             "id": item[0],
             "titulo": item[1],
-            "categoria_id": item[2],
+            "produtora_principal_id": item[2],
             "orcamento": float(item[3]),
             "duracao": str(item[4]),
             "sinopse":item[5],
             "ano": item[6],
             "imagem": item[7],
-            "flag":item[8]
+            "flag":item[8],
+            "categorias":item[9]
+
         }
         for item in results
     ]
